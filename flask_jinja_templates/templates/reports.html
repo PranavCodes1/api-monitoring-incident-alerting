@@ -1,0 +1,944 @@
+{% extends "base.html" %}
+
+{% block title %}Reports | API Monitor{% endblock %}
+
+{% block page_title %}
+Reports
+{% endblock %}
+
+{% block page_subtitle %}
+Analyze API availability, response time and monitoring performance
+{% endblock %}
+
+{% block content %}
+
+<!-- =====================================================
+     REPORT SUMMARY
+     ===================================================== -->
+
+<div class="row g-3 mb-4">
+
+    <!-- Overall Uptime -->
+
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card report-stat-card">
+
+            <div class="report-stat-icon green-icon">
+                <i class="bi bi-arrow-up-circle-fill"></i>
+            </div>
+
+            <div>
+
+                <p class="report-stat-label">
+                    Overall Uptime
+                </p>
+
+                <h3 class="report-stat-value">
+                    {{ overall_uptime }}%
+                </h3>
+
+                <span class="report-stat-note success-text">
+                    Last 30 days
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Average Response -->
+
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card report-stat-card">
+
+            <div class="report-stat-icon blue-icon">
+                <i class="bi bi-speedometer2"></i>
+            </div>
+
+            <div>
+
+                <p class="report-stat-label">
+                    Avg. Response
+                </p>
+
+                <h3 class="report-stat-value">
+                    {{ avg_response_time }} ms
+                </h3>
+
+                <span class="report-stat-note">
+                    All monitored APIs
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Total Checks -->
+
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card report-stat-card">
+
+            <div class="report-stat-icon purple-icon">
+                <i class="bi bi-activity"></i>
+            </div>
+
+            <div>
+
+                <p class="report-stat-label">
+                    Total Checks
+                </p>
+
+                <h3 class="report-stat-value">
+                    {{ total_checks }}
+                </h3>
+
+                <span class="report-stat-note">
+                    {{ report_period_label }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Total Downtime -->
+
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card report-stat-card">
+
+            <div class="report-stat-icon red-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+
+            <div>
+
+                <p class="report-stat-label">
+                    Total Downtime
+                </p>
+
+                <h3 class="report-stat-value">
+                    {{ total_downtime }}
+                </h3>
+
+                <span class="report-stat-note danger-text">
+                    {{ report_period_label }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     REPORT FILTERS
+     ===================================================== -->
+
+<div class="dashboard-card mb-4">
+
+    <div class="card-header-custom">
+
+        <div>
+
+            <h3 class="section-title">
+                Report Filters
+            </h3>
+
+            <p class="section-subtitle">
+                Select the API and time period for the report
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <form method="GET" action="{{ url_for('reports') }}" class="report-filter-body">
+
+        <div class="report-filter-group">
+
+            <label>
+                API
+            </label>
+
+            <select name="api_id" class="form-select report-select">
+
+    <option
+        value="all"
+        {% if selected_api_id == "all" %}selected{% endif %}
+    >
+        All APIs
+    </option>
+
+    {% for api in apis %}
+    <option
+        value="{{ api.id }}"
+        {% if selected_api_id|string == api.id|string %}selected{% endif %}
+    >
+        {{ api.name }}
+    </option>
+    {% endfor %}
+
+</select>
+        </div>
+
+
+        <div class="report-filter-group">
+
+            <label>
+                Time Period
+            </label>
+
+            <select name="time_period" class="form-select report-select">
+
+    <option
+        value="24h"
+        {% if selected_time_period == "24h" %}selected{% endif %}
+    >
+        Last 24 Hours
+    </option>
+
+    <option
+        value="7d"
+        {% if selected_time_period == "7d" %}selected{% endif %}
+    >
+        Last 7 Days
+    </option>
+
+    <option
+        value="30d"
+        {% if selected_time_period == "30d" %}selected{% endif %}
+    >
+        Last 30 Days
+    </option>
+
+    <option
+        value="3m"
+        {% if selected_time_period == "3m" %}selected{% endif %}
+    >
+        Last 3 Months
+    </option>
+
+</select>        
+	</div>
+
+
+        <div class="report-filter-group">
+
+            <label>
+                Report Type
+            </label>
+
+           <select name="report_type" class="form-select report-select">
+
+    <option
+        value="performance"
+        {% if selected_report_type == "performance" %}selected{% endif %}
+    >
+        Performance Report
+    </option>
+
+    <option
+        value="uptime"
+        {% if selected_report_type == "uptime" %}selected{% endif %}
+    >
+        Uptime Report
+    </option>
+
+    <option
+        value="incident"
+        {% if selected_report_type == "incident" %}selected{% endif %}
+    >
+        Incident Report
+    </option>
+
+</select>
+        </div>
+
+
+        <div class="report-filter-action">
+
+            <button type="submit" class="generate-report-btn">
+
+                <i class="bi bi-file-earmark-bar-graph"></i>
+
+                Generate Report
+
+            </button>
+
+            <button
+                type="submit"
+                class="generate-report-btn ms-2"
+                formmethod="POST"
+                formaction="{{ url_for('send_report_discord') }}"
+            >
+
+                <i class="bi bi-discord"></i>
+
+                Send to Discord
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% if selected_report_type == "performance" %}
+<!-- =====================================================
+     PERFORMANCE OVERVIEW
+     ===================================================== -->
+
+<div class="dashboard-card mb-4">
+
+    <div class="card-header-custom">
+
+        <div>
+
+            <h3 class="section-title">
+                Performance Overview
+            </h3>
+
+            <p class="section-subtitle">
+                API response time and availability overview
+            </p>
+
+        </div>
+
+        <span class="report-period-badge">
+            {{ report_period_label }}
+        </span>
+
+    </div>
+
+
+    {% if chart_data.has_data %}
+
+    <div class="p-3">
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+
+            <span class="table-secondary-text">
+                Average response time
+            </span>
+
+            <span class="table-secondary-text">
+                {{ chart_data.min_response }} ms – {{ chart_data.max_response }} ms
+            </span>
+
+        </div>
+
+        <div style="width: 100%; overflow-x: auto;">
+
+            <svg
+                viewBox="0 0 1000 300"
+                width="100%"
+                height="300"
+                role="img"
+                aria-label="Average API response time performance chart"
+            >
+
+                <!-- Grid -->
+                <line x1="60" y1="35" x2="940" y2="35" stroke="currentColor" opacity="0.10" />
+                <line x1="60" y1="140" x2="940" y2="140" stroke="currentColor" opacity="0.10" />
+                <line x1="60" y1="245" x2="940" y2="245" stroke="currentColor" opacity="0.10" />
+
+                <!-- Axes -->
+                <line x1="60" y1="35" x2="60" y2="245" stroke="currentColor" opacity="0.25" />
+                <line x1="60" y1="245" x2="940" y2="245" stroke="currentColor" opacity="0.25" />
+
+                <!-- Performance line -->
+                <polyline
+                    points="{{ chart_data.points }}"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    opacity="0.85"
+                />
+
+                {% for point in chart_data.point_data %}
+                <circle
+                    cx="{{ point.x }}"
+                    cy="{{ point.y }}"
+                    r="4"
+                    fill="currentColor"
+                    opacity="0.9"
+                >
+                    <title>{{ point.value }} ms</title>
+                </circle>
+                {% endfor %}
+
+                <!-- Y-axis labels -->
+                <text x="10" y="40" font-size="12" fill="currentColor" opacity="0.65">
+                    {{ chart_data.max_response }} ms
+                </text>
+
+                <text x="10" y="250" font-size="12" fill="currentColor" opacity="0.65">
+                    {{ chart_data.min_response }} ms
+                </text>
+
+                <!-- X-axis labels -->
+                {% for label in chart_data.labels %}
+                <text
+                    x="{{ label.x }}"
+                    y="275"
+                    text-anchor="middle"
+                    font-size="12"
+                    fill="currentColor"
+                    opacity="0.65"
+                >
+                    {{ label.text }}
+                </text>
+                {% endfor %}
+
+            </svg>
+
+        </div>
+
+    </div>
+
+    {% else %}
+
+    <div class="performance-placeholder">
+
+        <div class="performance-placeholder-icon">
+
+            <i class="bi bi-bar-chart-line-fill"></i>
+
+        </div>
+
+        <h4>
+            No Performance Data
+        </h4>
+
+        <p>
+            No monitoring data is available for the selected API and time period.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =====================================================
+     API PERFORMANCE TABLE
+     ===================================================== -->
+
+<div class="dashboard-card mb-4">
+
+    <div class="card-header-custom">
+
+        <div>
+
+            <h3 class="section-title">
+                API Performance
+            </h3>
+
+            <p class="section-subtitle">
+                Performance summary for monitored APIs
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="table monitoring-table report-table align-middle mb-0">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        API
+                    </th>
+
+                    <th>
+                        Availability
+                    </th>
+
+                    <th>
+                        Avg. Response
+                    </th>
+
+                    <th>
+                        Fastest
+                    </th>
+
+                    <th>
+                        Slowest
+                    </th>
+
+                    <th>
+                        Incidents
+                    </th>
+
+                    <th>
+                        Performance
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for api in report_data %}
+                <tr>
+
+                    <td>
+
+                        <div class="api-name-wrapper">
+
+                            <div class="api-small-icon">
+                                <i class="bi {{ api.icon_class }}"></i>
+                            </div>
+
+                            <div>
+
+                                <div class="api-name">
+                                    {{ api.name }}
+                                </div>
+
+                                <div class="api-url">
+                                    {{ api.url }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        <strong class="{% if api.availability >= 99 %}success-text{% elif api.availability >= 97 %}success-text{% else %}danger-text{% endif %}">
+                            {{ api.availability }}%
+                        </strong>
+                    </td>
+
+
+                    <td>
+                        {{ api.avg_response }} ms
+                    </td>
+
+
+                    <td>
+                        {{ api.fastest }} ms
+                    </td>
+
+
+                    <td>
+                        {{ api.slowest }}
+                    </td>
+
+
+                    <td>
+                        {{ api.incident_count }}
+                    </td>
+
+
+                    <td>
+
+                        {% if api.performance_label == 'Excellent' %}
+                        <span class="performance-badge excellent-performance">
+                            Excellent
+                        </span>
+                        {% elif api.performance_label == 'Good' %}
+                        <span class="performance-badge good-performance">
+                            Good
+                        </span>
+                        {% else %}
+                        <span class="performance-badge poor-performance">
+                            Poor
+                        </span>
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center table-secondary-text">
+                        No performance data available yet.
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+{% endif %}
+
+{% if selected_report_type == "uptime" %}
+<!-- =====================================================
+     UPTIME REPORT
+     ===================================================== -->
+
+<div class="dashboard-card">
+
+    <div class="card-header-custom">
+
+        <div>
+
+            <h3 class="section-title">
+                Uptime Report
+            </h3>
+
+            <p class="section-subtitle">
+                Availability summary of monitored APIs
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="uptime-report-grid">
+
+        {% for api in report_data %}
+        <div class="uptime-api-card">
+
+            <div class="uptime-api-header">
+
+                <div>
+
+                    <strong>
+                        {{ api.name }}
+                    </strong>
+
+                    <span>
+                        {{ report_period_label }}
+		    </span>
+
+                </div>
+
+                <strong class="{% if api.availability >= 97 %}success-text{% else %}danger-text{% endif %}">
+                    {{ api.availability }}%
+                </strong>
+
+            </div>
+
+
+            <div class="uptime-progress">
+
+                <div
+                    class="uptime-progress-fill"
+                    style="width: {{ api.availability }}%;"
+                ></div>
+
+            </div>
+
+            <div class="uptime-footer">
+
+                <span>
+                    Uptime
+                </span>
+
+                <span>
+                    {{ api.downtime }} downtime
+                </span>
+
+            </div>
+
+        </div>
+        {% else %}
+        <p class="table-secondary-text mb-0">
+            No uptime data available yet.
+        </p>
+        {% endfor %}
+
+    </div>
+
+</div>
+{% endif %}
+
+{% if selected_report_type == "incident" %}
+<!-- Incident Summary -->
+<div class="row g-4 mb-4">
+
+    <!-- Total Incidents -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+
+                    <div>
+                        <p class="text-muted mb-1">
+                            Total Incidents
+                        </p>
+
+                        <h3 class="mb-1">
+                            {{ total_incidents }}
+                        </h3>
+
+                        <small class="text-muted">
+                            {{ report_period_label }}
+                        </small>
+                    </div>
+
+                    <div class="fs-3 text-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Resolved -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+
+                    <div>
+                        <p class="text-muted mb-1">
+                            Resolved
+                        </p>
+
+                        <h3 class="mb-1">
+                            {{ resolved_incidents }}
+                        </h3>
+
+                        <small class="text-muted">
+                            Resolved incidents
+                        </small>
+                    </div>
+
+                    <div class="fs-3 text-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Open -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+
+                    <div>
+                        <p class="text-muted mb-1">
+                            Open
+                        </p>
+
+                        <h3 class="mb-1">
+                            {{ open_incidents }}
+                        </h3>
+
+                        <small class="text-muted">
+                            Currently unresolved
+                        </small>
+                    </div>
+
+                    <div class="fs-3 text-warning">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Downtime -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+
+                    <div>
+                        <p class="text-muted mb-1">
+                            Total Downtime
+                        </p>
+
+                        <h3 class="mb-1">
+                            {{ incident_downtime }}
+                        </h3>
+
+                        <small class="text-muted">
+                            Across all incidents
+                        </small>
+                    </div>
+
+                    <div class="fs-3 text-danger">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!-- Incident Report -->
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-header bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="mb-1">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Incident Report
+                </h5>
+
+                <small class="text-muted">
+                    Incidents recorded during {{ report_period_label }}
+                </small>
+            </div>
+
+            <span class="badge bg-light text-dark">
+                {{ incident_data|length }} Incident{% if incident_data|length != 1 %}s{% endif %}
+            </span>
+
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+
+        {% if incident_data %}
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+
+                    <tr>
+                        <th>Incident</th>
+                        <th>API</th>
+                        <th>Reason</th>
+                        <th>Started</th>
+                        <th>Resolved</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Alerts</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for incident in incident_data %}
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ incident.incident_code }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ incident.api_name }}
+                        </td>
+
+                        <td>
+                            {{ incident.reason }}
+                        </td>
+
+                        <td>
+                            {{ incident.started_at }}
+                        </td>
+
+                        <td>
+                            {{ incident.resolved_at }}
+                        </td>
+
+                        <td>
+                            {{ incident.duration }}
+                        </td>
+
+                        <td>
+
+                            {% if incident.status == "RESOLVED" %}
+
+                                <span class="badge bg-success">
+                                    Resolved
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-danger">
+                                    Open
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ incident.alert_count }}
+                            </span>
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="text-center py-5">
+
+            <i class="bi bi-check-circle fs-1 text-success"></i>
+
+            <h6 class="mt-3">
+                No incidents found
+            </h6>
+
+            <p class="text-muted mb-0">
+                No incidents were recorded during
+                {{ report_period_label }}.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
+
+{% endblock %}

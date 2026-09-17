@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}Incidents | API Monitor{% endblock %}
+
+{% block page_title %}
+Incidents
+{% endblock %}
+
+{% block page_subtitle %}
+Track API failures, downtime and incident resolution
+{% endblock %}
+
+
+{% block content %}
+
+<!-- =====================================================
+     INCIDENT SUMMARY
+     ===================================================== -->
+
+<div class="row g-3 mb-4">
+
+    <!-- Total Incidents -->
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card incident-stat-card">
+
+            <div class="incident-stat-icon blue-icon">
+                <i class="bi bi-list-check"></i>
+            </div>
+
+            <div>
+                <p class="incident-stat-label">
+                    Total Incidents
+                </p>
+
+                <h3 class="incident-stat-value">
+                    {{ total_incidents }}
+                </h3>
+
+                <span class="incident-stat-note">
+                    Last 30 days
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Active -->
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card incident-stat-card">
+
+            <div class="incident-stat-icon red-icon">
+                <i class="bi bi-exclamation-circle-fill"></i>
+            </div>
+
+            <div>
+                <p class="incident-stat-label">
+                    Active
+                </p>
+
+                <h3 class="incident-stat-value">
+                    {{ active_incidents }}
+                </h3>
+
+                <span class="incident-stat-note danger-text">
+                    Requires attention
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Resolved -->
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card incident-stat-card">
+
+            <div class="incident-stat-icon green-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+
+            <div>
+                <p class="incident-stat-label">
+                    Resolved
+                </p>
+
+                <h3 class="incident-stat-value">
+                    {{ resolved_incidents }}
+                </h3>
+
+                <span class="incident-stat-note success-text">
+                    {{ resolved_percent }}% resolved
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Average Resolution -->
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card incident-stat-card">
+
+            <div class="incident-stat-icon purple-icon">
+                <i class="bi bi-stopwatch-fill"></i>
+            </div>
+
+            <div>
+                <p class="incident-stat-label">
+                    Avg. Resolution
+                </p>
+
+                <h3 class="incident-stat-value">
+                    {{ avg_resolution_time }}
+                </h3>
+
+                <span class="incident-stat-note">
+                    Last 30 days
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     INCIDENT LIST
+     ===================================================== -->
+
+<div class="dashboard-card">
+
+    <!-- Header -->
+
+    <div class="card-header-custom incidents-header">
+
+        <div>
+            <h3 class="section-title">
+                Incident History
+            </h3>
+
+            <p class="section-subtitle">
+                API failures detected during automatic monitoring
+            </p>
+        </div>
+
+
+        <!-- Filters -->
+
+        <div class="incident-filters">
+
+            <select class="form-select incident-select">
+
+                <option selected>
+                    All APIs
+                </option>
+
+                {% for api in apis %}
+                <option>
+                    {{ api.name }}
+                </option>
+                {% endfor %}
+
+            </select>
+
+
+           <select id="statusFilter" class="form-select incident-select">
+
+    <option value="all" selected>
+        All Status
+    </option>
+
+    <option value="active">
+        Active
+    </option>
+
+    <option value="resolved">
+        Resolved
+    </option>
+
+</select>
+
+            <select class="form-select incident-select">
+
+                <option selected>
+                    Last 30 Days
+                </option>
+
+                <option>
+                    Last 7 Days
+                </option>
+
+                <option>
+                    Last 24 Hours
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- Table -->
+
+    <div class="table-responsive">
+
+        <table class="table monitoring-table incident-table align-middle mb-0">
+
+            <thead>
+
+                <tr>
+                    <th>Incident ID</th>
+                    <th>API</th>
+                    <th>Type</th>
+                    <th>Started</th>
+                    <th>Resolved</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for incident in incidents %}
+                <tr data-status="{{ incident.status|lower }}">
+
+                    <td>
+                        <span class="incident-id">
+                            {{ incident.incident_code }}
+                        </span>
+                    </td>
+
+
+                    <td>
+
+                        <div class="api-name-wrapper">
+
+                            <div class="api-small-icon">
+                                <i class="bi {{ incident.icon_class }}"></i>
+                            </div>
+
+                            <div>
+
+                                <div class="api-name">
+                                    {{ incident.api_name }}
+                                </div>
+
+                                <div class="api-url">
+                                    {{ incident.api_url }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        <span class="incident-type {% if incident.error_type == 'Timeout' %}timeout-type{% else %}error-type{% endif %}">
+                            {{ incident.error_type }}
+                        </span>
+                    </td>
+
+
+                    <td>
+                        {{ incident.started_at }}
+                    </td>
+
+
+                    <td>
+                        {% if incident.resolved_at %}
+                        {{ incident.resolved_at }}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+
+
+                    <td>
+                        <span class="{% if incident.status == 'Active' %}danger-text{% endif %}">
+                            {{ incident.duration }}
+                        </span>
+                    </td>
+
+
+                    <td>
+
+                        {% if incident.status == 'Active' %}
+                        <span class="incident-status-badge active-incident">
+                            <span></span>
+                            Active
+                        </span>
+                        {% else %}
+                        <span class="incident-status-badge resolved-incident">
+                            <span></span>
+                            Resolved
+                        </span>
+                        {% endif %}
+
+                    </td>
+
+
+                    <td class="text-end">
+
+                        <a
+                            href="{{ url_for('incidents', incident_id=incident.id) }}"
+                            class="incident-view-btn"
+                        >
+                            <i class="bi bi-eye"></i>
+                            View
+                        </a>
+
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center table-secondary-text">
+                        No incidents recorded yet.
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     INCIDENT DETAILS
+     ===================================================== -->
+
+{% if selected_incident %}
+<div class="dashboard-card mt-4">
+
+    <div class="card-header-custom">
+
+        <div>
+
+            <h3 class="section-title">
+                Incident Details
+            </h3>
+
+            <p class="section-subtitle">
+                {% if selected_incident.status == 'Active' %}
+                Details of the currently selected active incident
+                {% else %}
+                Details of the currently selected incident
+                {% endif %}
+            </p>
+
+        </div>
+
+        {% if selected_incident.status == 'Active' %}
+        <span class="incident-status-badge active-incident">
+            <span></span>
+            Active
+        </span>
+        {% else %}
+        <span class="incident-status-badge resolved-incident">
+            <span></span>
+            Resolved
+        </span>
+        {% endif %}
+
+    </div>
+
+
+    <div class="incident-detail-body">
+
+        <!-- API Information -->
+
+        <div class="incident-detail-api">
+
+            <div class="api-detail-icon">
+                <i class="bi {{ selected_incident.icon_class }}"></i>
+            </div>
+
+            <div>
+
+                <h4>
+                    {{ selected_incident.api_name }}
+                </h4>
+
+                <p>
+                    {{ selected_incident.api_url }}
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- Incident Information -->
+
+        <div class="row g-3 mt-2">
+
+            <div class="col-6 col-md-3">
+
+                <div class="detail-box">
+
+                    <span>
+                        Incident ID
+                    </span>
+
+                    <strong>
+                        {{ selected_incident.incident_code }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-md-3">
+
+                <div class="detail-box">
+
+                    <span>
+                        Error Type
+                    </span>
+
+                    <strong class="danger-text">
+                        {{ selected_incident.error_type }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-md-3">
+
+                <div class="detail-box">
+
+                    <span>
+                        Started
+                    </span>
+
+                    <strong>
+                        {{ selected_incident.started_at }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-md-3">
+
+                <div class="detail-box">
+
+                    <span>
+                        Duration
+                    </span>
+
+                    <strong>
+                        {{ selected_incident.duration }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Error -->
+
+        <div class="incident-error-box">
+
+            <div class="incident-error-title">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Error Details
+            </div>
+
+            <p>
+                {{ selected_incident.reason }}
+            </p>
+
+        </div>
+
+
+        <!-- Alert Information -->
+
+        <div class="incident-alert-info">
+
+            <div>
+
+                <span class="detail-label">
+                    Alerts Sent
+                </span>
+
+                <strong>
+                    {{ selected_incident.alerts_sent }}
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span class="detail-label">
+                    Discord
+                </span>
+
+                <strong class="{% if selected_incident.discord_sent %}success-text{% else %}table-secondary-text{% endif %}">
+                    {% if selected_incident.discord_sent %}Sent{% else %}—{% endif %}
+                </strong>
+
+            </div>
+
+
+            
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const statusFilter = document.getElementById("statusFilter");
+    const incidentRows = document.querySelectorAll(
+        ".incident-table tbody tr[data-status]"
+    );
+
+    statusFilter.addEventListener("change", function () {
+
+        const selectedStatus = this.value;
+
+        incidentRows.forEach(function (row) {
+
+            const incidentStatus = row.dataset.status;
+
+            if (
+                selectedStatus === "all" ||
+                incidentStatus === selectedStatus
+            ) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+
+        });
+
+    });
+
+});
+</script>
+{% endblock %}

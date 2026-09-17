@@ -1,0 +1,860 @@
+{% extends "base.html" %}
+
+{% block title %}Monitoring | API Monitor{% endblock %}
+
+{% block page_title %}
+Monitoring
+{% endblock %}
+
+{% block page_subtitle %}
+Real-time health and performance of monitored APIs
+{% endblock %}
+
+
+{% block content %}
+
+<!-- =====================================================
+     MONITORING SUMMARY
+     ===================================================== -->
+
+<div class="row g-3 mb-4">
+
+    <!-- Total Checks -->
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card monitoring-stat-card">
+
+            <div class="monitoring-stat-icon blue-icon">
+                <i class="bi bi-activity"></i>
+            </div>
+
+            <div>
+                <p class="monitoring-stat-label">
+                    Total Checks
+                </p>
+
+                <h3 class="monitoring-stat-value" id="totalChecks">
+                    {{ total_checks }}
+                </h3>
+
+                <span class="monitoring-stat-note">
+                    Last 24 hours
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Successful Checks -->
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card monitoring-stat-card">
+
+            <div class="monitoring-stat-icon green-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+
+            <div>
+                <p class="monitoring-stat-label">
+                    Successful
+                </p>
+
+                <h3 class="monitoring-stat-value" id="successfulChecks">
+                    {{ successful_checks }}
+                </h3>
+
+                <span class="monitoring-stat-note success-text" id="successfulPercent">
+                    {{ successful_percent }}%
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Failed Checks -->
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card monitoring-stat-card">
+
+            <div class="monitoring-stat-icon red-icon">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+
+            <div>
+                <p class="monitoring-stat-label">
+                    Failed
+                </p>
+
+                <h3 class="monitoring-stat-value" id="failedChecks">
+                    {{ failed_checks }}
+                </h3>
+
+                <span class="monitoring-stat-note danger-text" id="failedPercent">
+                    {{ failed_percent }}%
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Average Response -->
+    <div class="col-12 col-sm-6 col-xl-3">
+
+        <div class="dashboard-card monitoring-stat-card">
+
+            <div class="monitoring-stat-icon purple-icon">
+                <i class="bi bi-speedometer2"></i>
+            </div>
+
+            <div>
+                <p class="monitoring-stat-label">
+                    Avg Response
+                </p>
+
+                <h3 class="monitoring-stat-value" id="avgResponseTime">
+                    {{ avg_response_time }} ms
+                </h3>
+
+                <span class="monitoring-stat-note">
+                    Across all APIs
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     CURRENT API HEALTH
+     ===================================================== -->
+
+<div class="dashboard-card mb-4">
+
+    <div class="card-header-custom">
+
+        <div>
+            <h3 class="section-title">
+                Current API Health
+            </h3>
+
+            <p class="section-subtitle">
+                Latest monitoring result for each registered API
+            </p>
+        </div>
+
+        <span class="monitoring-live-indicator" id="liveIndicator">
+            <span></span>
+            Monitoring Active
+        </span>
+
+	<small id="lastUpdated"
+       class="text-muted d-block mt-2">
+    Last updated: just now
+	</small>
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="table monitoring-table align-middle mb-0">
+
+            <thead>
+
+                <tr>
+                    <th>API</th>
+                    <th>Status</th>
+                    <th>HTTP Code</th>
+                    <th>Response Time</th>
+                    <th>Availability</th>
+                    <th>Last Checked</th>
+                    <th>Next Check</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody id="apiHealthTableBody">
+
+                {% for api in apis %}
+                <tr>
+
+                    <td>
+
+                        <div class="api-name-wrapper">
+
+                            <div class="api-small-icon">
+                                <i class="bi {{ api.icon_class }}"></i>
+                            </div>
+
+                            <div>
+
+                                <div class="api-name">
+                                    {{ api.name }}
+                                </div>
+
+                                <div class="api-url">
+                                    {{ api.url }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        {% if api.status == 'UP' %}
+                        <span class="status-badge status-up">
+                            <span class="status-dot"></span>
+                            UP
+                        </span>
+                        {% else %}
+                        <span class="status-badge status-down">
+                            <span class="status-dot"></span>
+                            DOWN
+                        </span>
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+                        <span class="{% if api.status == 'UP' %}success-text{% else %}danger-text{% endif %}">
+                            {{ api.last_status_code }}
+                        </span>
+                    </td>
+
+
+                    <td>
+                        {% if api.status == 'UP' %}
+                        {{ api.last_response_time }} ms
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+
+
+                    <td>
+                        <strong class="success-text">
+                            {{ api.uptime }}%
+                        </strong>
+                    </td>
+
+
+                    <td>
+                        {{ api.last_checked }}
+                    </td>
+
+
+                    <td>
+                        {{ api.next_check }}
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center table-secondary-text">
+                        No APIs registered yet.
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     MONITORING HISTORY
+     ===================================================== -->
+
+<div class="dashboard-card">
+
+    <div class="card-header-custom monitoring-history-header">
+
+        <div>
+
+            <h3 class="section-title">
+                Monitoring History
+            </h3>
+
+            <p class="section-subtitle">
+                Individual API health checks recorded by the system
+            </p>
+
+        </div>
+
+
+        <div class="history-filters">
+
+            <select class="form-select history-select">
+
+                <option selected>
+                    All APIs
+                </option>
+
+                {% for api in apis %}
+                <option>
+                    {{ api.name }}
+                </option>
+                {% endfor %}
+
+            </select>
+
+
+            <select class="form-select history-select">
+
+                <option selected>
+                    Last 24 Hours
+                </option>
+
+                <option>
+                    Last 7 Days
+                </option>
+
+                <option>
+                    Last 30 Days
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="table monitoring-table align-middle mb-0">
+
+            <thead>
+
+                <tr>
+                    <th>Time</th>
+                    <th>API</th>
+                    <th>Status</th>
+                    <th>HTTP Code</th>
+                    <th>Response Time</th>
+                    <th>Error</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody id="monitoringHistoryBody">
+
+                {% for log in monitoring_logs %}
+                <tr>
+
+                    <td>
+                        {{ log.checked_at }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{ log.api_name }}
+                        </strong>
+                    </td>
+
+                    <td>
+
+                        {% if log.success %}
+                        <span class="status-badge status-up">
+                            <span class="status-dot"></span>
+                            UP
+                        </span>
+                        {% else %}
+                        <span class="status-badge status-down">
+                            <span class="status-dot"></span>
+                            DOWN
+                        </span>
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+                        <span class="{% if log.success %}success-text{% else %}danger-text{% endif %}">
+                            {{ log.status_code }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {% if log.success %}
+                        {{ log.response_time_ms }} ms
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if log.error_message %}
+                        {{ log.error_message }}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center table-secondary-text">
+                        No monitoring logs recorded yet.
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     LIVE MONITORING JAVASCRIPT
+     ===================================================== -->
+
+<script>
+
+    async function updateMonitoringData() {
+
+        try {
+
+            const response = await fetch(
+                "{{ url_for('monitoring_data') }}",
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json"
+                    },
+                    cache: "no-store"
+                }
+            );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Server returned " + response.status
+                );
+
+            }
+
+
+            const data = await response.json();
+
+
+            // =================================================
+            // SUMMARY CARDS
+            // =================================================
+
+            document.getElementById("totalChecks").textContent =
+                data.summary.total_checks;
+
+            document.getElementById("successfulChecks").textContent =
+                data.summary.successful_checks;
+
+            document.getElementById("failedChecks").textContent =
+                data.summary.failed_checks;
+
+            document.getElementById("successfulPercent").textContent =
+                data.summary.successful_percent + "%";
+
+            document.getElementById("failedPercent").textContent =
+                data.summary.failed_percent + "%";
+
+            document.getElementById("avgResponseTime").textContent =
+                data.summary.avg_response_time + " ms";
+
+
+            // =================================================
+            // API HEALTH TABLE
+            // =================================================
+
+            const apiTable =
+                document.getElementById("apiHealthTableBody");
+
+
+            apiTable.innerHTML = "";
+
+
+            if (data.apis.length === 0) {
+
+                apiTable.innerHTML = `
+                    <tr>
+                        <td colspan="7"
+                            class="text-center table-secondary-text">
+                            No APIs registered yet.
+                        </td>
+                    </tr>
+                `;
+
+            } else {
+
+                data.apis.forEach(api => {
+
+                    const statusUp = api.status === "UP";
+
+                    const statusClass = statusUp
+                        ? "status-up"
+                        : "status-down";
+
+                    const textClass = statusUp
+                        ? "success-text"
+                        : "danger-text";
+
+                    const statusCode =
+                        api.status_code ?? "—";
+
+                    const responseTime =
+                        api.response_time !== null
+                            ? api.response_time + " ms"
+                            : "—";
+
+
+                    const row = document.createElement("tr");
+
+
+                    row.innerHTML = `
+                        <td>
+                            <div class="api-name-wrapper">
+
+                                <div class="api-small-icon">
+                                    <i class="bi bi-globe2"></i>
+                                </div>
+
+                                <div>
+
+                                    <div class="api-name">
+                                        ${escapeHtml(api.name)}
+                                    </div>
+
+                                    <div class="api-url">
+                                        ${escapeHtml(api.url)}
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge ${statusClass}">
+
+                                <span class="status-dot"></span>
+
+                                ${api.status}
+
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="${textClass}">
+                                ${statusCode}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            ${responseTime}
+
+                        </td>
+
+
+                        <td>
+
+                            <strong class="success-text">
+                                ${api.uptime}%
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            ${escapeHtml(api.last_checked)}
+
+                        </td>
+
+
+                        <td>
+
+                            ${escapeHtml(
+                                calculateNextCheck(api)
+                            )}
+
+                        </td>
+                    `;
+
+
+                    apiTable.appendChild(row);
+
+                });
+
+            }
+
+
+            // =================================================
+            // MONITORING HISTORY
+            // =================================================
+
+            const historyTable =
+                document.getElementById(
+                    "monitoringHistoryBody"
+                );
+
+
+            historyTable.innerHTML = "";
+
+
+            if (data.monitoring_logs.length === 0) {
+
+                historyTable.innerHTML = `
+                    <tr>
+                        <td colspan="6"
+                            class="text-center table-secondary-text">
+                            No monitoring logs recorded yet.
+                        </td>
+                    </tr>
+                `;
+
+            } else {
+
+                data.monitoring_logs.forEach(log => {
+
+                    const statusUp = log.success === true;
+
+                    const statusClass = statusUp
+                        ? "status-up"
+                        : "status-down";
+
+                    const textClass = statusUp
+                        ? "success-text"
+                        : "danger-text";
+
+                    const responseTime =
+                        log.response_time !== null
+                            ? log.response_time + " ms"
+                            : "—";
+
+                    const statusCode =
+                        log.status_code ?? "—";
+
+                    const error =
+                        log.error_message
+                            ? escapeHtml(log.error_message)
+                            : "—";
+
+
+                    const row = document.createElement("tr");
+
+
+                    row.innerHTML = `
+
+                        <td>
+                            ${escapeHtml(log.checked_at)}
+                        </td>
+
+
+                        <td>
+                            <strong>
+                                ${escapeHtml(log.api_name)}
+                            </strong>
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge ${statusClass}">
+
+                                <span class="status-dot"></span>
+
+                                ${statusUp ? "UP" : "DOWN"}
+
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="${textClass}">
+                                ${statusCode}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+                            ${responseTime}
+                        </td>
+
+
+                        <td>
+                            ${error}
+                        </td>
+
+                    `;
+
+
+                    historyTable.appendChild(row);
+
+                });
+
+            }
+
+
+            // =================================================
+            // LAST UPDATED
+            // =================================================
+
+            const now = new Date();
+
+            document.getElementById("lastUpdated").textContent =
+                "Last updated: " +
+                now.toLocaleTimeString();
+
+
+            // =================================================
+            // LIVE INDICATOR
+            // =================================================
+
+            document.getElementById(
+                "liveIndicator"
+            ).innerHTML = `
+                <span></span>
+                Monitoring Active
+            `;
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Monitoring update failed:",
+                error
+            );
+
+
+            document.getElementById(
+                "liveIndicator"
+            ).innerHTML = `
+                <span></span>
+                Connection Error
+            `;
+
+
+            document.getElementById(
+                "lastUpdated"
+            ).textContent =
+                "Unable to fetch latest monitoring data";
+
+        }
+
+    }
+
+
+    // =========================================================
+    // CALCULATE NEXT CHECK
+    // =========================================================
+
+    function calculateNextCheck(api) {
+
+        if (!api.last_checked) {
+
+            return "Pending";
+
+        }
+
+
+        if (!api.interval_seconds) {
+
+            return "Scheduled";
+
+        }
+
+
+        const lastChecked =
+            new Date(api.last_checked);
+
+
+        const nextCheck =
+            new Date(
+                lastChecked.getTime() +
+                (api.interval_seconds * 1000)
+            );
+
+
+        return nextCheck.toLocaleString();
+
+    }
+
+
+    // =========================================================
+    // BASIC HTML ESCAPING
+    // =========================================================
+
+    function escapeHtml(value) {
+
+        if (value === null || value === undefined) {
+
+            return "";
+
+        }
+
+
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    // =========================================================
+    // INITIAL UPDATE
+    // =========================================================
+
+    updateMonitoringData();
+
+
+    // =========================================================
+    // UPDATE EVERY 5 SECONDS
+    // =========================================================
+
+    setInterval(
+        updateMonitoringData,
+        5000
+    );
+
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | API Monitor{% endblock %}
+
+{% block page_title %}
+Dashboard
+{% endblock %}
+
+{% block page_subtitle %}
+Overview of API health, monitoring activity and incidents
+{% endblock %}
+
+
+{% block content %}
+
+<!-- =====================================================
+     SUMMARY CARDS
+     ===================================================== -->
+
+<div class="row g-4 mb-4">
+
+    <!-- Total APIs -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="dashboard-card stat-card h-100">
+
+            <div class="stat-card-top">
+                <div>
+                    <p class="stat-label">Total APIs</p>
+                    <h2 class="stat-value">{{ total_apis }}</h2>
+                </div>
+
+                <div class="stat-icon blue-icon">
+                    <i class="bi bi-plug-fill"></i>
+                </div>
+            </div>
+
+            <p class="stat-description">
+                APIs registered for monitoring
+            </p>
+
+        </div>
+    </div>
+
+
+    <!-- APIs UP -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="dashboard-card stat-card h-100">
+
+            <div class="stat-card-top">
+                <div>
+                    <p class="stat-label">APIs UP</p>
+                    <h2 class="stat-value">{{ apis_up }}</h2>
+                </div>
+
+                <div class="stat-icon green-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+            </div>
+
+            <p class="stat-description">
+                APIs currently responding normally
+            </p>
+
+        </div>
+    </div>
+
+
+    <!-- APIs DOWN -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="dashboard-card stat-card h-100">
+
+            <div class="stat-card-top">
+                <div>
+                    <p class="stat-label">APIs DOWN</p>
+                    <h2 class="stat-value">{{ apis_down }}</h2>
+                </div>
+
+                <div class="stat-icon red-icon">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+            </div>
+
+            <p class="stat-description">
+                APIs currently unavailable
+            </p>
+
+        </div>
+    </div>
+
+
+    <!-- Active Incidents -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="dashboard-card stat-card h-100">
+
+            <div class="stat-card-top">
+                <div>
+                    <p class="stat-label">Active Incidents</p>
+                    <h2 class="stat-value">{{ active_incidents }}</h2>
+                </div>
+
+                <div class="stat-icon orange-icon">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+            </div>
+
+            <p class="stat-description">
+                Incidents requiring attention
+            </p>
+
+        </div>
+    </div>
+
+
+    <!-- Overall Uptime -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="dashboard-card stat-card h-100">
+
+            <div class="stat-card-top">
+                <div>
+                    <p class="stat-label">Overall Uptime</p>
+                    <h2 class="stat-value">{{ overall_uptime }}%</h2>
+                </div>
+
+                <div class="stat-icon green-icon">
+                    <i class="bi bi-arrow-up-circle-fill"></i>
+                </div>
+            </div>
+
+            <p class="stat-description">
+                Average uptime across monitored APIs
+            </p>
+
+        </div>
+    </div>
+
+
+    <!-- Average Response Time -->
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="dashboard-card stat-card h-100">
+
+            <div class="stat-card-top">
+                <div>
+                    <p class="stat-label">Avg Response Time</p>
+                    <h2 class="stat-value">{{ avg_response_time }} <span>ms</span></h2>
+                </div>
+
+                <div class="stat-icon purple-icon">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+            </div>
+
+            <p class="stat-description">
+                Average response time of APIs
+            </p>
+
+        </div>
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     API STATUS
+     ===================================================== -->
+
+<div class="dashboard-card mb-4">
+
+    <div class="card-header-custom">
+
+        <div>
+            <h3 class="section-title">
+                API Status
+            </h3>
+
+            <p class="section-subtitle">
+                Current health of monitored APIs
+            </p>
+        </div>
+
+        <a href="{{ url_for('api_management') }}" class="view-all-link">
+            View All
+            <i class="bi bi-arrow-right"></i>
+        </a>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="table monitoring-table align-middle mb-0">
+
+            <thead>
+                <tr>
+                    <th>API Name</th>
+                    <th>Status</th>
+                    <th>HTTP Status</th>
+                    <th>Response Time</th>
+                    <th>Last Checked</th>
+                    <th>Incident</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for api in apis %}
+                <tr>
+
+                    <td>
+                        <div class="api-name-wrapper">
+
+                            <div class="api-small-icon">
+                                <i class="bi {{ api.icon_class }}"></i>
+                            </div>
+
+                            <div>
+                                <div class="api-name">
+                                    {{ api.name }}
+                                </div>
+
+                                <div class="api-url">
+                                    {{ api.url }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </td>
+
+
+                    <td>
+                        {% if api.status == 'UP' %}
+                        <span class="status-badge status-up">
+                            <span class="status-dot"></span>
+                            UP
+                        </span>
+                        {% else %}
+                        <span class="status-badge status-down">
+                            <span class="status-dot"></span>
+                            DOWN
+                        </span>
+                        {% endif %}
+                    </td>
+
+
+                    <td>
+                        <span class="http-status {% if api.status == 'UP' %}success-text{% else %}danger-text{% endif %}">
+                            {{ api.last_status_code }}
+                        </span>
+                    </td>
+
+
+                    <td>
+                        {% if api.status == 'UP' %}
+                        <span class="response-time">
+                            {{ api.last_response_time }} ms
+                        </span>
+                        {% else %}
+                        <span class="table-secondary-text">
+                            —
+                        </span>
+                        {% endif %}
+                    </td>
+
+
+                    <td>
+                        <span class="table-secondary-text">
+                            {{ api.last_checked }}
+                        </span>
+                    </td>
+
+
+                    <td>
+                        {% if api.active_incident_code %}
+                        <span class="incident-badge">
+                            {{ api.active_incident_code }}
+                        </span>
+                        {% else %}
+                        <span class="no-incident">
+                            —
+                        </span>
+                        {% endif %}
+                    </td>
+
+
+                    <td class="text-end">
+
+                        <button class="table-action-btn">
+                            <i class="bi bi-eye"></i>
+                            View
+                        </button>
+
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center table-secondary-text">
+                        No APIs registered yet.
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     BOTTOM SECTION
+     ===================================================== -->
+
+<div class="row g-4">
+
+    <!-- Recent Incidents -->
+    <div class="col-12 col-xl-6">
+
+        <div class="dashboard-card h-100">
+
+            <div class="card-header-custom">
+
+                <div>
+                    <h3 class="section-title">
+                        Recent Incidents
+                    </h3>
+
+                    <p class="section-subtitle">
+                        Latest API failures and recoveries
+                    </p>
+                </div>
+
+                <a href="{{ url_for('incidents') }}" class="view-all-link">
+                    View All
+                </a>
+
+            </div>
+
+
+            <div class="incident-list">
+
+                {% for incident in recent_incidents %}
+                <div class="incident-item">
+
+                    <div class="incident-icon {% if incident.status == 'ACTIVE' %}incident-active{% else %}incident-resolved{% endif %}">
+                        {% if incident.status == 'ACTIVE' %}
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        {% else %}
+                        <i class="bi bi-check-circle-fill"></i>
+                        {% endif %}
+                    </div>
+
+                    <div class="incident-content">
+
+                        <div class="incident-top">
+
+                            <span class="incident-api">
+                                {{ incident.api_name }}
+                            </span>
+
+                            <span class="incident-status {% if incident.status == 'ACTIVE' %}active-status{% else %}resolved-status{% endif %}">
+                                {{ incident.status }}
+                            </span>
+
+                        </div>
+
+                        <p class="incident-description">
+                            {{ incident.reason }}
+                        </p>
+
+                        <span class="incident-time">
+                            {% if incident.status == 'ACTIVE' %}
+                            Started {{ incident.time_ago }}
+                            {% else %}
+                            Resolved {{ incident.time_ago }}
+                            {% endif %}
+                        </span>
+
+                    </div>
+
+                </div>
+                {% else %}
+                <p class="table-secondary-text mb-0">
+                    No recent incidents.
+                </p>
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Recent Alerts -->
+    <div class="col-12 col-xl-6">
+
+        <div class="dashboard-card h-100">
+
+            <div class="card-header-custom">
+
+                <div>
+                    <h3 class="section-title">
+                        Recent Alerts
+                    </h3>
+
+                    <p class="section-subtitle">
+                        Latest notifications generated by the system
+                    </p>
+                </div>
+
+                <a href="{{ url_for('alerts') }}" class="view-all-link">
+                    View All
+                </a>
+
+            </div>
+
+
+            <div class="alert-list">
+
+                {% for alert in recent_alerts %}
+                <div class="alert-item">
+
+                    <div class="alert-icon {% if alert.channel == 'Discord' %}discord-alert{% else %}email-alert{% endif %}">
+                        {% if alert.channel == 'Discord' %}
+                        <i class="bi bi-discord"></i>
+                        {% else %}
+                        <i class="bi bi-envelope-fill"></i>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert-content">
+
+                        <div class="alert-top">
+
+                            <span class="alert-api">
+                                {{ alert.api_name }}
+                            </span>
+
+                            <span class="alert-status {% if alert.status == 'SENT' %}sent-status{% else %}failed-status{% endif %}">
+                                {{ alert.status }}
+                            </span>
+
+                        </div>
+
+                        <p class="alert-description">
+                            {{ alert.description }}
+                        </p>
+
+                        <span class="alert-time">
+                            {{ alert.time_ago }}
+                        </span>
+
+                    </div>
+
+                </div>
+                {% else %}
+                <p class="table-secondary-text mb-0">
+                    No recent alerts.
+                </p>
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
