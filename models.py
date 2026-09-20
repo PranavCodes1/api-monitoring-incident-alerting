@@ -268,3 +268,36 @@ class Alert(db.Model):
 
     def __repr__(self):
         return f"<Alert {self.id}>"
+
+# =========================================================
+# SYSTEM SETTINGS
+# =========================================================
+
+class SystemSetting(db.Model):
+    __tablename__ = "system_settings"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    key = db.Column(
+        db.String(100),
+        unique=True,
+        nullable=False
+    )
+
+    value = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    def __repr__(self):
+        return f"<SystemSetting {self.key}>"

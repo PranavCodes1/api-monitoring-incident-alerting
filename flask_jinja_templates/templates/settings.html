@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | API Monitor{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_subtitle %}Manage your administrator account{% endblock %}
+
+{% block content %}
+<div class="management-header mb-4">
+    <div>
+        <h2 class="content-heading">Administrator Settings</h2>
+        <p class="content-description">Update your administrator username or password.</p>
+    </div>
+</div>
+
+<div class="dashboard-card mb-4">
+    <div class="card-header-custom">
+        <div>
+            <h3 class="section-title">Change Username</h3>
+            <p class="section-subtitle">Enter a new username and confirm your current password.</p>
+        </div>
+    </div>
+    <div class="p-4">
+        <form method="POST" action="{{ url_for('settings') }}">
+            <input type="hidden" name="action" value="change_username">
+            <div class="mb-3">
+                <label for="new_username" class="form-label">New Username</label>
+                <input type="text" id="new_username" name="new_username" class="form-control"
+                       value="{{ admin.username }}" minlength="3" autocomplete="username" required>
+            </div>
+            <div class="mb-4">
+                <label for="username_current_password" class="form-label">Current Password</label>
+                <input type="password" id="username_current_password" name="current_password"
+                       class="form-control" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn primary-action-btn">
+                <i class="bi bi-person-check"></i> Save Username
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="dashboard-card mb-4">
+    <div class="card-header-custom">
+        <div>
+            <h3 class="section-title">Change Password</h3>
+            <p class="section-subtitle">Choose a new password for your administrator account.</p>
+        </div>
+    </div>
+    <div class="p-4">
+        <form method="POST" action="{{ url_for('settings') }}">
+            <input type="hidden" name="action" value="change_password">
+            <div class="mb-3">
+                <label for="password_current_password" class="form-label">Current Password</label>
+                <input type="password" id="password_current_password" name="current_password"
+                       class="form-control" autocomplete="current-password" required>
+            </div>
+            <div class="mb-3">
+                <label for="new_password" class="form-label">New Password</label>
+                <input type="password" id="new_password" name="new_password" class="form-control"
+                       minlength="8" autocomplete="new-password" required>
+            </div>
+            <div class="mb-4">
+                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control"
+                       minlength="8" autocomplete="new-password" required>
+            </div>
+            <button type="submit" class="btn primary-action-btn">
+                <i class="bi bi-shield-lock"></i> Change Password
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

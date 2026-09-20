@@ -244,7 +244,7 @@ Overview of API health, monitoring activity and incidents
 
                     <td>
                         <span class="http-status {% if api.status == 'UP' %}success-text{% else %}danger-text{% endif %}">
-                            {{ api.last_status_code }}
+                            {{ api.last_status_code|http_status_label }}
                         </span>
                     </td>
 

@@ -1,5 +1,6 @@
 import time
 import requests
+from http_status_utils import http_status_label
 
 from datetime import datetime
 
@@ -68,8 +69,8 @@ def check_api(db, api):
             success = False
 
             error_message = (
-                f"Expected HTTP {api['expected_status']} "
-                f"but received HTTP {status_code}"
+                f"{http_status_label(status_code)}. "
+                f"Expected HTTP {api['expected_status']}."
             )
 
     except requests.exceptions.Timeout:

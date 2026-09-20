@@ -1026,7 +1026,7 @@ Register and manage APIs monitored by the system
 
                                 <td>
                                     <span class="{% if log.success %}success-text{% else %}danger-text{% endif %}">
-                                        {{ log.status_code }}
+                                        {{ log.status_code|http_status_label }}
                                     </span>
                                 </td>
 

@@ -47,12 +47,12 @@
          SIDEBAR
          ===================================================== -->
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
 
 
         <!-- BRAND -->
 
-        <div class="sidebar-brand">
+        <a href="{{ url_for('dashboard') }}" class="sidebar-brand text-decoration-none" aria-label="Go to Dashboard">
 
             <div class="brand-icon">
                 <i class="bi bi-shield-check"></i>
@@ -70,7 +70,7 @@
 
             </div>
 
-        </div>
+        </a>
 
 
         <!-- =================================================
@@ -193,10 +193,9 @@
             <!-- Settings -->
 
             <a
-                href="#"
-                class="nav-link"
-            >
-
+    href="{{ url_for('settings') }}"
+    class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}"
+>
                 <i class="bi bi-gear-fill"></i>
 
                 <span>
@@ -267,6 +266,8 @@
 
     </aside>
 
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
 
     <!-- =====================================================
          MAIN AREA
@@ -291,7 +292,9 @@
                     type="button"
                     class="mobile-menu-btn"
                     id="mobileMenuBtn"
-                    aria-label="Open menu"
+                    aria-label="Open navigation menu"
+                    aria-controls="sidebar"
+                    aria-expanded="false"
                 >
 
                     <i class="bi bi-list"></i>
@@ -418,6 +421,39 @@
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
 ></script>
+
+<script>
+(function () {
+    const menuButton = document.getElementById('mobileMenuBtn');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+
+    if (!menuButton || !sidebar || !backdrop) return;
+
+    function setMenuOpen(open) {
+        sidebar.classList.toggle('sidebar-open', open);
+        backdrop.classList.toggle('backdrop-visible', open);
+        document.body.classList.toggle('sidebar-menu-open', open);
+        menuButton.setAttribute('aria-expanded', String(open));
+        menuButton.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+    }
+
+    menuButton.addEventListener('click', function () {
+        setMenuOpen(!sidebar.classList.contains('sidebar-open'));
+    });
+
+    backdrop.addEventListener('click', function () { setMenuOpen(false); });
+    sidebar.querySelectorAll('.nav-link').forEach(function (link) {
+        link.addEventListener('click', function () { setMenuOpen(false); });
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') setMenuOpen(false);
+    });
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 768) setMenuOpen(false);
+    });
+})();
+</script>
 
 
 {% block extra_js %}{% endblock %}

@@ -3612,3 +3612,110 @@ a {
     }
 
 }
+
+
+/* ================= MOBILE SIDEBAR DRAWER ================= */
+.sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: min(280px, 85vw);
+        transform: translateX(-105%);
+        transition: transform 0.25s ease-in-out;
+        visibility: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+        visibility: visible;
+    }
+
+    .sidebar-backdrop.backdrop-visible {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        z-index: 999;
+    }
+
+    .mobile-menu-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 44px;
+        cursor: pointer;
+        position: relative;
+        z-index: 1001;
+    }
+
+    .sidebar-brand {
+        flex-shrink: 0;
+        color: inherit;
+    }
+
+    body.sidebar-menu-open {
+        overflow: hidden;
+    }
+}
+
+/* Reports action buttons: prevent overlap on tablet and mobile */
+@media (max-width: 991.98px) {
+    .report-filter-action {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .report-filter-action .generate-report-btn {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0 !important;
+        box-sizing: border-box;
+    }
+}
+
+
+/* Login password visibility toggle */
+.login-input-wrapper input#password {
+    padding-right: 46px;
+}
+
+.login-password-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.login-password-toggle:hover,
+.login-password-toggle:focus-visible {
+    color: #60a5fa;
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+}
+
+.login-password-toggle i {
+    position: static;
+    transform: none;
+    font-size: 16px;
+    pointer-events: none;
+}

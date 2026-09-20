@@ -158,7 +158,19 @@
                             placeholder="Enter your password"
                             autocomplete="current-password"
                             required
+                            aria-describedby="password-toggle"
                         >
+
+                        <button
+                            type="button"
+                            class="login-password-toggle"
+                            id="password-toggle"
+                            aria-label="Show password"
+                            aria-pressed="false"
+                            title="Show password"
+                        >
+                            <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
 
                     </div>
 
@@ -200,6 +212,29 @@
 
     </div>
 
+
+<script>
+    (() => {
+        const passwordInput = document.getElementById('password');
+        const toggleButton = document.getElementById('password-toggle');
+        const icon = toggleButton.querySelector('i');
+
+        toggleButton.addEventListener('click', () => {
+            const showPassword = passwordInput.type === 'password';
+            passwordInput.type = showPassword ? 'text' : 'password';
+            toggleButton.setAttribute('aria-pressed', String(showPassword));
+            toggleButton.setAttribute('aria-label', showPassword ? 'Hide password' : 'Show password');
+            toggleButton.title = showPassword ? 'Hide password' : 'Show password';
+            icon.className = showPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            passwordInput.focus();
+        });
+
+        // Always mask the password when the login form is submitted.
+        passwordInput.form.addEventListener('submit', () => {
+            passwordInput.type = 'password';
+        });
+    })();
+</script>
 
 </body>
 

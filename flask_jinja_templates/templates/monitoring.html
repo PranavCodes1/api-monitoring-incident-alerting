@@ -231,7 +231,7 @@ Real-time health and performance of monitored APIs
 
                     <td>
                         <span class="{% if api.status == 'UP' %}success-text{% else %}danger-text{% endif %}">
-                            {{ api.last_status_code }}
+                            {{ api.last_status_code|http_status_label }}
                         </span>
                     </td>
 
@@ -389,7 +389,7 @@ Real-time health and performance of monitored APIs
 
                     <td>
                         <span class="{% if log.success %}success-text{% else %}danger-text{% endif %}">
-                            {{ log.status_code }}
+                            {{ log.status_code|http_status_label }}
                         </span>
                     </td>
 
@@ -433,6 +433,14 @@ Real-time health and performance of monitored APIs
      ===================================================== -->
 
 <script>
+    function formatHttpStatus(code) {
+        if (code === null || code === undefined || code === "—" || code === "") return "—";
+        const phrases = {200:"OK",201:"Created",202:"Accepted",204:"No Content",301:"Moved Permanently",302:"Found",304:"Not Modified",400:"Bad Request",401:"Unauthorized",403:"Forbidden",404:"Not Found",405:"Method Not Allowed",408:"Request Timeout",409:"Conflict",410:"Gone",413:"Content Too Large",415:"Unsupported Media Type",418:"I'm a teapot",422:"Unprocessable Content",429:"Too Many Requests",500:"Internal Server Error",501:"Not Implemented",502:"Bad Gateway",503:"Service Unavailable",504:"Gateway Timeout"};
+        const n = Number(code);
+        const category = n >= 100 && n < 200 ? "Informational" : n < 300 && n >= 200 ? "Success" : n < 400 && n >= 300 ? "Redirection" : n < 500 && n >= 400 ? "Client Error" : n < 600 && n >= 500 ? "Server Error" : "Unknown Category";
+        return `${n} – ${phrases[n] || "HTTP Status"} · ${category}`;
+    }
+
 
     async function updateMonitoringData() {
 
@@ -522,7 +530,7 @@ Real-time health and performance of monitored APIs
                         : "danger-text";
 
                     const statusCode =
-                        api.status_code ?? "—";
+                        formatHttpStatus(api.status_code);
 
                     const responseTime =
                         api.response_time !== null
@@ -663,7 +671,7 @@ Real-time health and performance of monitored APIs
                             : "—";
 
                     const statusCode =
-                        log.status_code ?? "—";
+                        formatHttpStatus(log.status_code);
 
                     const error =
                         log.error_message

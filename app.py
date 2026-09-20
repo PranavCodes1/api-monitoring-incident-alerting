@@ -15,19 +15,28 @@ from flask import (
     flash
 )
 
-from werkzeug.security import check_password_hash
+from werkzeug.security import (
+    check_password_hash,
+    generate_password_hash
+)
 
 from sqlalchemy import text
 
 from datetime import datetime, timedelta
 
-from models import db, Admin
+from models import (
+    db,
+    Admin,
+    SystemSetting
+)
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from monitoring_service import check_all_apis
 from report_service import generate_report
 from report_notification_service import send_report_to_discord as send_report_message_to_discord
+from alert_service import send_discord_message
+from http_status_utils import http_status_label
 # =========================================================
 # PATH CONFIGURATION
 # =========================================================
@@ -56,6 +65,8 @@ app = Flask(
     template_folder=TEMPLATE_DIR,
     static_folder=STATIC_DIR
 )
+
+app.jinja_env.filters["http_status_label"] = http_status_label
 
 
 # =========================================================
@@ -98,7 +109,42 @@ def login_required(view_function):
 
     return wrapped_view
 
+# =========================================================
+# SETTINGS HELPERS
+# =========================================================
 
+def get_setting(key, default=None):
+
+    setting = SystemSetting.query.filter_by(
+        key=key
+    ).first()
+
+    if setting is None:
+        return default
+
+    return setting.value
+
+
+def save_setting(key, value):
+
+    setting = SystemSetting.query.filter_by(
+        key=key
+    ).first()
+
+    if setting is None:
+
+        setting = SystemSetting(
+            key=key,
+            value=value
+        )
+
+        db.session.add(setting)
+
+    else:
+
+        setting.value = value
+
+    db.session.commit()
 # =========================================================
 # LOGIN
 # =========================================================
@@ -2636,6 +2682,80 @@ def send_report_discord():
         )
     )
 
+# =========================================================
+# SETTINGS
+# =========================================================
+
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    try:
+        admin = Admin.query.filter_by(id=session["admin_id"]).first()
+        if admin is None:
+            flash("Administrator account not found.", "danger")
+            return redirect(url_for("logout"))
+
+        if request.method == "POST":
+            action = request.form.get("action", "")
+
+            # Change administrator username
+            if action == "change_username":
+                new_username = request.form.get("new_username", "").strip()
+                current_password = request.form.get("current_password", "")
+
+                if not new_username:
+                    flash("Username cannot be empty.", "danger")
+                    return redirect(url_for("settings"))
+
+                if len(new_username) < 3:
+                    flash("Username must be at least 3 characters.", "danger")
+                    return redirect(url_for("settings"))
+
+                if not check_password_hash(admin.password_hash, current_password):
+                    flash("Current password is incorrect.", "danger")
+                    return redirect(url_for("settings"))
+
+                existing_admin = Admin.query.filter_by(username=new_username).first()
+                if existing_admin and existing_admin.id != admin.id:
+                    flash("That username is already in use.", "danger")
+                    return redirect(url_for("settings"))
+
+                admin.username = new_username
+                db.session.commit()
+                flash("Administrator username updated successfully.", "success")
+                return redirect(url_for("settings"))
+
+            # Change administrator password
+            if action == "change_password":
+                current_password = request.form.get("current_password", "")
+                new_password = request.form.get("new_password", "")
+                confirm_password = request.form.get("confirm_password", "")
+
+                if not check_password_hash(admin.password_hash, current_password):
+                    flash("Current password is incorrect.", "danger")
+                    return redirect(url_for("settings"))
+
+                if len(new_password) < 8:
+                    flash("New password must be at least 8 characters.", "danger")
+                    return redirect(url_for("settings"))
+
+                if new_password != confirm_password:
+                    flash("New passwords do not match.", "danger")
+                    return redirect(url_for("settings"))
+
+                admin.password_hash = generate_password_hash(new_password)
+                db.session.commit()
+                session.clear()
+                flash("Password changed successfully. Please log in again.", "success")
+                return redirect(url_for("login"))
+
+        return render_template("settings.html", admin=admin)
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"[SETTINGS ERROR] {e}")
+        flash("Unable to update settings.", "danger")
+        return redirect(url_for("dashboard"))
 
 # =========================================================
 # MONITORING SCHEDULER
